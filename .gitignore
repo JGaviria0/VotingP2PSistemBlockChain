@@ -1,0 +1,9 @@
+*/Files/*
+Server/hashTable.txt
+Server/hashTable.json
+Client/
+*/__pycache__
+.env
+FilesForTest/
+Server/Server deprecate.py
+Client/Client deprecate.py
