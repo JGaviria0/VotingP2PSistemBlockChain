@@ -4,7 +4,7 @@ import json
 import os
 import sys
 from dotenv import load_dotenv
-import socket
+import socket as sok
 import argparse
 
 load_dotenv()
@@ -14,16 +14,19 @@ DOWNLOAD_TYPE = os.getenv('DOWNLOAD_TYPE')
 SUCCESS_CODE = os.getenv('SUCCESS_CODE')
 MAX_RANGE = int(os.getenv('MAX_RANGE'))
 FIND_POSITION_TYPE = os.getenv('FIND_POSITION_TYPE')
+CONFIRM_SUSCRIPTION = os.getenv('CONFIRM_SUSCRIPTION')
+CONFIRM_SUSCRIPTION = os.getenv('CONFIRM_SUSCRIPTION')
+SEND_TYPE = os.getenv('SEND_TYPE')
 
 sys.path.insert(0, PRINCIPAL_PATH)
-from Util import header, subscribe
+from Util import header, subscribe, socketsRepo
 context = zmq.Context()
 preNode = ""
 posNode = ""
-responsabilityRange = ((0, MAX_RANGE), (0, 0))
+responsabilityRange = (0,MAX_RANGE)
 
 def getMyIP():  
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s = sok.socket(sok.AF_INET, sok.SOCK_DGRAM)
     s.connect(("8.8.8.8", 80))
     IPAddr = s.getsockname()[0]
     return IPAddr
@@ -31,9 +34,33 @@ def getMyIP():
 def getMyID(): 
     return random.randint(0, MAX_RANGE)
 
-def getPosition(socket,responsability, id, postNode):
+def getPosition(socket,responsability, heade):
+    if heade["OperationType"] == FIND_POSITION_TYPE:
+        subscribe.getPosition(socket,responsability, heade["MyId"], preNode, posNode, heade["Address"])
+
+def confirmPosition(socket, heade):
     global preNode, posNode, responsabilityRange
-    posNode, responsabilityRange = subscribe.getPosition(socket,responsability, id, postNode)
+    if heade["OperationType"] == CONFIRM_SUSCRIPTION: 
+        preNode = heade["Address"]
+        responsabilityRange = (heade["MyId"], responsabilityRange[1])
+        hs = header.checkAllGood()
+        headerJSON = json.dumps(hs).encode()
+        socket.send_multipart([headerJSON])
+
+def savePart(socket, heade, binaryFile):
+    if heade["OperationType"] == SEND_TYPE :
+        hash = heade["Hash"]
+        fileName = heade["Name"]
+        print(f"upload file: {fileName} hash: {hash}")
+        message = socketsRepo.saveFile(hash, binaryFile)
+        socket.send(message.encode())
+
+def download(socket, heade):
+    if heade["OperationType"] == DOWNLOAD_TYPE:
+        fileName = heade["Name"]
+        hs = header.createHeader(fileName, DOWNLOAD_TYPE)
+        hsJSON = json.dumps(hs).encode()
+        socketsRepo.sendFile(socket, fileName, hsJSON)
 
 def main():
     global preNode, posNode, responsabilityRange
@@ -46,11 +73,11 @@ def main():
     parser.add_argument('-port', action="store", type=str)
     parser.add_argument('--firstNode', action="store_true", default=False)
     data = parser.parse_args()
+    print(data.firstNode)
     portra = data.port
     socket = context.socket(zmq.REP)
     socket.bind(f"tcp://*:{portra}")
     myAddress = f"{getMyIP()}:{portra}"
-
 
     firtsNode = f"{data.address}" if not data.firstNode else myAddress
     print("FirstNode-> ", firtsNode)
@@ -59,16 +86,22 @@ def main():
     preNodeSocket = 0
     posNode = myAddress
     myID = getMyID()
-    responsabilityRange = ((myID, MAX_RANGE), (0, myID))
+    print("My ID-> ", myID)
+    responsabilityRange = (myID, myID)
     
     if not data.firstNode: 
-        preNodeSocket, preNode, posNode, maxRange= subscribe.findPosition(firtsNode, myAddress, myID)
-        if max(maxRange[0], maxRange[1]) == MAX_RANGE: 
-            responsabilityRange = ((myID, MAX_RANGE),(0,maxRange[1])) 
-        else:
-            responsabilityRange = ((myID, maxRange[0]),(-1,-1))
+        socketPreNode, posNode, preNode, preNodeId= subscribe.findPosition(firtsNode, myAddress, myID)
+        responsabilityRange = (preNodeId, myID) 
+        
+        #Falta enviar todos los paquetes que pertenecen al nuevo tramo
 
-        # posNode = linkage(preNode, portra)
+        # confirm pos
+        hs = header.confirmSubscription(myAddress, myID)
+        headerJSON = json.dumps(hs).encode()
+        socketPreNode.send_multipart([headerJSON, headerJSON])
+
+        message = json.loads(socketPreNode.recv())
+        print(message)
     
     while True: 
         print(myAddress, myID, preNode, posNode, responsabilityRange)
@@ -76,16 +109,15 @@ def main():
         heade = json.loads(headerJSON)
         print(heade)
 
+        print(heade["OperationType"])
         menu = {
-            FIND_POSITION_TYPE: getPosition(socket,responsabilityRange, heade["MyId"], posNode)
+            FIND_POSITION_TYPE: getPosition(socket,responsabilityRange, heade),
+            CONFIRM_SUSCRIPTION: confirmPosition(socket, heade),
+            SEND_TYPE: savePart(socket, heade, binaryFile),
+            DOWNLOAD_TYPE: download(socket, heade)
+
         }
 
-
         menu[heade["OperationType"]]
-
-
-        
-        
-
 
 main()

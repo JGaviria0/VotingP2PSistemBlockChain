@@ -8,17 +8,9 @@ from dotenv import load_dotenv
 load_dotenv()
 FIND_POSITION_TYPE = os.getenv('FIND_POSITION_TYPE')
 SUCCESS_CODE = os.getenv('SUCCESS_CODE')
+MAX_RANGE = int(os.getenv('MAX_RANGE'))
 
 context = zmq.Context()
-
-def responsabilityRangeFix(responsabilityRange, NextOneID):
-    if (responsabilityRange[0][0] <= NextOneID and NextOneID <= responsabilityRange[0][1]):
-        return ((responsabilityRange[0][0], NextOneID), (-1,-1))
-    
-    if (responsabilityRange[1][0] <= NextOneID and NextOneID < responsabilityRange[1][1]):
-        return ( responsabilityRange[0], (responsabilityRange[1][0], NextOneID))
-
-
 
 def findPosition(firtsNode, myAddres, myID):
     FindMyPosition = False
@@ -30,37 +22,55 @@ def findPosition(firtsNode, myAddres, myID):
             hs = header.subscription(myAddres, myID)
             headerJSON = json.dumps(hs).encode()
             socketsub.send_multipart([headerJSON, headerJSON])
-            
-            message = json.loads(socketsub.recv())
+            res = socketsub.recv_multipart()
+            message = json.loads(res[0])
             print(message)
 
             if message["Code"] == SUCCESS_CODE:
                 FindMyPosition = True
-                lastRange = message["MaxResponsabilityRange"]
-                return socketsub, firtsNode, message["PosNode"], lastRange
+                print(message["PreNode"])
+                return socketsub, firtsNode, message["PreNode"][0], message["PreNode"][1]
             
             socketsub.close()
-            firtsNode = message["PosNode"]
+            firtsNode = message["PreNode"]
 
         print("Error, didn't find my position")
     except Exception as e: 
         print(e)
         print("Not possible to connect to the server.")
 
-def getPosition(socket, responsabilityRange, NextOneID, posNode): 
+def isIn(responsabilityRange, value):
+
+    if responsabilityRange[0] == responsabilityRange[1]:
+        return True
+    
+    if responsabilityRange[0] > responsabilityRange[1]:
+        if (responsabilityRange[0] < value and value < MAX_RANGE) or (0 < value and value < responsabilityRange[1]):
+            return True
+    
+    if responsabilityRange[0] < value and value < responsabilityRange[1]:
+        return True
+
+    return False
+
+
+def getPosition(socket, responsabilityRange, NextOneID, preNode, posNode, address): 
     NextOneID = int(NextOneID)
     print(NextOneID)
 
-    if (responsabilityRange[0][0] <= NextOneID and NextOneID <= responsabilityRange[0][1]) or (responsabilityRange[1][0] <= NextOneID and NextOneID < responsabilityRange[1][1]): 
-        hs = header.getPosition(posNode, responsabilityRange)
+    if (isIn(responsabilityRange, NextOneID)): 
+        hs = header.getPosition(preNode, responsabilityRange)
         headerJSON = json.dumps(hs).encode()
         socket.send_multipart([headerJSON, headerJSON])
-        responsabilityRange = responsabilityRangeFix(responsabilityRange, NextOneID)
-        return NextOneID, responsabilityRange
+        
+        # responsabilityRange = (NextOneID, responsabilityRange[1])
+
+        # return address, responsabilityRange
 
     else: 
-        hs = header.askNextOne(posNode)
+        hs = header.askNextOne(preNode)
         headerJSON = json.dumps(hs).encode()
         socket.send_multipart([headerJSON, headerJSON])
+        return -1, -1
 
 

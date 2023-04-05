@@ -1,6 +1,6 @@
 from email import header
 import os
-# from util import hashing
+from Util import hashing
 import socket
 from dotenv import load_dotenv
 import random
@@ -20,13 +20,70 @@ GET_UPLOAD_DATA_TYPE = os.getenv('GET_UPLOAD_DATA_TYPE')
 SUCCESS_CODE = os.getenv('SUCCESS_CODE')
 ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
 MAX_RANGE = os.getenv('MAX_RANGE')
+CONFIRM_SUSCRIPTION = os.getenv('CONFIRM_SUSCRIPTION')
+ALL_GOOD = os.getenv('ALL_GOOD')
+GET_UPLOAD_DATA_TYPE = os.getenv('GET_UPLOAD_DATA_TYPE')
+MAGNET_LINK = os.getenv('MAGNET_LINK')
 # ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
 # ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
 # ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
-# ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
-# ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
-# ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
-# ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
+
+def createHeader( fileName, operationType, hash="", path=MAIN_DIRECTORY ):
+    fileSize = os.path.getsize(f"{path}{fileName}")
+    if hash == "":
+        hash = hashing.hashfile(fileName, path)
+
+    #https://www.c-sharpcorner.com/blogs/how-to-find-ip-address-in-python
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    IPAddr = s.getsockname()[0]
+    
+    try:
+        _, ext = fileName.split('.') 
+    except:
+        ext = ""
+    header = {
+        "OperationType": operationType,
+        "Name": fileName,
+        "Size": fileSize,
+        "Hash": hash,
+        "Source": IPAddr,
+        "Ext": ext
+    }
+
+    return header
+
+def getFile(fileName):
+
+    header = {
+        "OperationType" : DOWNLOAD_TYPE,
+        "Name": fileName
+    }
+
+    return header
+
+def sendChunkHeader(name, hash, size):
+
+    header = {
+        "OperationType": SEND_TYPE,
+        "Name": name,
+        "Size": size,
+        "Hash": hash
+    }
+
+    return header
+
+def sendMagnetLink(name, hash, size, parts):
+
+    header = {
+        "OperationType": MAGNET_LINK,
+        "Name": name,
+        "Size": size,
+        "Hash": hash,
+        "Parts": parts
+    }
+
+    return header
 
 def subscription(myAddres, myID):
 
@@ -38,23 +95,55 @@ def subscription(myAddres, myID):
 
     return header
 
-def getPosition(posNode, responsabilityRange): 
+def confirmSubscription(myAddres, myID):
 
     header = {
-        "Code": SUCCESS_CODE, 
-        "Message": "Already find your position, be ready to get the files.",
-        "PosNode": posNode,
-        "MaxResponsabilityRange": (responsabilityRange[1][1], responsabilityRange[0][1])
+        "OperationType" : CONFIRM_SUSCRIPTION,
+        "Address": myAddres,
+        "MyId": myID
     }
 
     return header
 
-def askNextOne(posNode): 
+def getPosition(preNode, responsabilityRange): 
+
+    header = {
+        "Code": SUCCESS_CODE, 
+        "Message": "Already find your position, be ready to get the files.",
+        "PreNode": (preNode, responsabilityRange[0])
+    }
+
+    return header
+
+def askNextOne(preNode): 
 
     header = {
         "Code": ASK_NEXT_ONE, 
         "Message": "I am not the responsable.",
-        "PosNode": posNode
+        "PreNode": preNode
+    }
+
+    return header
+
+def checkAllGood(): 
+
+    header = {
+        "Code": ALL_GOOD, 
+        "Message": "Ok, all good, I will change my range responsability"
+    }
+
+    return header
+
+def uploadFile( fileName, path=MAIN_DIRECTORY ):
+    
+    fileSize = os.path.getsize(f"{path}{fileName}")
+    hash = hashing.hashfile(fileName, path)
+
+    header = {
+        "OperationType": GET_UPLOAD_DATA_TYPE,
+        "Name": fileName,
+        "Size": fileSize,
+        "Hash": hash
     }
 
     return header
