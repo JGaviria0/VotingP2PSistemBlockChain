@@ -19,7 +19,7 @@ CONFIRM_SUSCRIPTION = os.getenv('CONFIRM_SUSCRIPTION')
 SEND_TYPE = os.getenv('SEND_TYPE')
 
 sys.path.insert(0, PRINCIPAL_PATH)
-from Util import header, subscribe, socketsRepo
+from Util import header, subscribe, socketsRepo, broker
 context = zmq.Context()
 preNode = ""
 posNode = ""
@@ -38,7 +38,7 @@ def getPosition(socket,responsability, heade):
     if heade["OperationType"] == FIND_POSITION_TYPE:
         subscribe.getPosition(socket,responsability, heade["MyId"], preNode, posNode, heade["Address"])
 
-def confirmPosition(socket, heade):
+def confirmPosition(socket, heade, directory, myAddress):
     global preNode, posNode, responsabilityRange
     if heade["OperationType"] == CONFIRM_SUSCRIPTION: 
         preNode = heade["Address"]
@@ -47,20 +47,32 @@ def confirmPosition(socket, heade):
         headerJSON = json.dumps(hs).encode()
         socket.send_multipart([headerJSON])
 
-def savePart(socket, heade, binaryFile):
+        #enviando lo que ya no esta en mi tramo
+        files = os.listdir(directory)
+        for i in files:
+            fileID = int(i,16)%MAX_RANGE
+            if not subscribe.isIn(responsabilityRange, fileID):
+                socketsub, _, _, _ = subscribe.findPosition(heade["Address"], myAddress, fileID)
+                fileSize = os.path.getsize(f"{directory}{i}")
+                with open(f'{directory}{i}', 'rb') as inputFile:
+                    bytes = inputFile.read()
+                    broker.sendChunk(bytes, socketsub, i, fileSize, 0, i)
+                os.remove(f'{directory}{i}')
+
+def savePart(socket, heade, binaryFile, directory):
     if heade["OperationType"] == SEND_TYPE :
         hash = heade["Hash"]
         fileName = heade["Name"]
         print(f"upload file: {fileName} hash: {hash}")
-        message = socketsRepo.saveFile(hash, binaryFile)
+        message = socketsRepo.saveFile(hash, binaryFile, dirNode=directory)
         socket.send(message.encode())
 
-def download(socket, heade):
+def download(socket, heade, directory):
     if heade["OperationType"] == DOWNLOAD_TYPE:
         fileName = heade["Name"]
-        hs = header.createHeader(fileName, DOWNLOAD_TYPE)
+        hs = header.createHeader(fileName, DOWNLOAD_TYPE, dirnode=directory)
         hsJSON = json.dumps(hs).encode()
-        socketsRepo.sendFile(socket, fileName, hsJSON)
+        socketsRepo.sendFile(socket, fileName, hsJSON, dirNode=directory)
 
 def main():
     global preNode, posNode, responsabilityRange
@@ -88,6 +100,10 @@ def main():
     myID = getMyID()
     print("My ID-> ", myID)
     responsabilityRange = (myID, myID)
+    mainPath = os.path.dirname(os.path.realpath(__file__))
+    directory = f"Files/{myID}/"
+    dirpath = os.path.join(mainPath, directory)
+    os.mkdir(dirpath)
     
     if not data.firstNode: 
         socketPreNode, posNode, preNode, preNodeId= subscribe.findPosition(firtsNode, myAddress, myID)
@@ -112,9 +128,9 @@ def main():
         print(heade["OperationType"])
         menu = {
             FIND_POSITION_TYPE: getPosition(socket,responsabilityRange, heade),
-            CONFIRM_SUSCRIPTION: confirmPosition(socket, heade),
-            SEND_TYPE: savePart(socket, heade, binaryFile),
-            DOWNLOAD_TYPE: download(socket, heade)
+            CONFIRM_SUSCRIPTION: confirmPosition(socket, heade, directory, myAddress),
+            SEND_TYPE: savePart(socket, heade, binaryFile, directory),
+            DOWNLOAD_TYPE: download(socket, heade, directory)
 
         }
 

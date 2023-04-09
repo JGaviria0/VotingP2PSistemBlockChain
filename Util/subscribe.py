@@ -1,4 +1,3 @@
-from matplotlib.font_manager import json_load
 import zmq
 import json
 import os

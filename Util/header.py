@@ -28,10 +28,10 @@ MAGNET_LINK = os.getenv('MAGNET_LINK')
 # ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
 # ASK_NEXT_ONE = os.getenv('ASK_NEXT_ONE')
 
-def createHeader( fileName, operationType, hash="", path=MAIN_DIRECTORY ):
-    fileSize = os.path.getsize(f"{path}{fileName}")
+def createHeader( fileName, operationType, hash="", path=MAIN_DIRECTORY, dirnode="" ):
+    fileSize = os.path.getsize(f"{dirnode}{fileName}")
     if hash == "":
-        hash = hashing.hashfile(fileName, path)
+        hash = hashing.hashfile(fileName, dirnode)
 
     #https://www.c-sharpcorner.com/blogs/how-to-find-ip-address-in-python
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
