@@ -34,7 +34,7 @@ def getMyIP():
 def getMyID(): 
     return random.randint(0, MAX_RANGE)
 
-def getPosition(socket,responsability, heade):
+def getPosition(socket,responsability, heade, preNode):
     if heade["OperationType"] == FIND_POSITION_TYPE:
         subscribe.getPosition(socket,responsability, heade["MyId"], preNode, posNode, heade["Address"])
 
@@ -50,6 +50,7 @@ def confirmPosition(socket, heade, directory, myAddress):
         #enviando lo que ya no esta en mi tramo
         files = os.listdir(directory)
         for i in files:
+            print("\n\n\n",i, "\n\n\n")
             fileID = int(i,16)%MAX_RANGE
             if not subscribe.isIn(responsabilityRange, fileID):
                 socketsub, _, _, _ = subscribe.findPosition(heade["Address"], myAddress, fileID)
@@ -57,6 +58,7 @@ def confirmPosition(socket, heade, directory, myAddress):
                 with open(f'{directory}{i}', 'rb') as inputFile:
                     bytes = inputFile.read()
                     broker.sendChunk(bytes, socketsub, i, fileSize, 0, i)
+                socketsub.close()
                 os.remove(f'{directory}{i}')
 
 def savePart(socket, heade, binaryFile, directory):
@@ -127,7 +129,7 @@ def main():
 
         print(heade["OperationType"])
         menu = {
-            FIND_POSITION_TYPE: getPosition(socket,responsabilityRange, heade),
+            FIND_POSITION_TYPE: getPosition(socket,responsabilityRange, heade, preNode),
             CONFIRM_SUSCRIPTION: confirmPosition(socket, heade, directory, myAddress),
             SEND_TYPE: savePart(socket, heade, binaryFile, directory),
             DOWNLOAD_TYPE: download(socket, heade, directory)
