@@ -1,3 +1,4 @@
+import uuid
 import zmq
 import random
 import json
@@ -6,6 +7,9 @@ import sys
 from dotenv import load_dotenv
 import socket as sok
 import argparse
+import string
+import hashlib
+
 
 load_dotenv()
 PRINCIPAL_PATH = os.getenv('PRINCIPAL_PATH')
@@ -17,6 +21,7 @@ FIND_POSITION_TYPE = os.getenv('FIND_POSITION_TYPE')
 CONFIRM_SUSCRIPTION = os.getenv('CONFIRM_SUSCRIPTION')
 CONFIRM_SUSCRIPTION = os.getenv('CONFIRM_SUSCRIPTION')
 SEND_TYPE = os.getenv('SEND_TYPE')
+RANDOM_CHARACTERS = os.getenv('RANDOM_CHARACTERS')
 
 sys.path.insert(0, PRINCIPAL_PATH)
 from Util import header, subscribe, socketsRepo, broker
@@ -32,7 +37,18 @@ def getMyIP():
     return IPAddr
 
 def getMyID(): 
-    return random.randint(0, MAX_RANGE)
+    mac = ':'.join(['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0,8*6,8)][::-1])
+    for _ in range(20): 
+        mac += random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
+
+    print("Your mac and random is",mac)
+    hash = hashlib.sha256()
+    hash.update(mac.encode())
+    hashPart = hash.hexdigest()
+    print("Your hash ID is",hashPart)
+    ID = int(hashPart, 16)%MAX_RANGE
+
+    return ID
 
 def getPosition(socket,responsability, heade, preNode):
     if heade["OperationType"] == FIND_POSITION_TYPE:
