@@ -41,21 +41,26 @@ def upload(fileName, address, firstNode, myAddress):
 def download(res, firstNode, myAddress):
     # res = json.loads(res)
     print(res)
-    totalBytes = b"" 
+    # totalBytes = b"" 
+    try: 
+        fileFullName, ext = res["Name"].split('.')
+    except:
+        ext = ""
     for parts in res["Parts"]:
         fileName, _ = parts
         print(parts)
         fileID = int(fileName, 16)%MAX_RANGE
         socketsub, _, _, _ = subscribe.findPosition(firstNode, myAddress, fileID)
         bytes = broker.getFile(socketsub, fileName)
-        totalBytes += bytes
+        # totalBytes += 
+        file1 = open(f"{fileFullName}2.{ext}", "ab")  # append mode
+        file1.write(bytes)
+        file1.close()
     
-    try: 
-        fileName, ext = res["Name"].split('.')
-    except:
-        ext = ""
-    res = socketsRepo.saveFile( f'{fileName}2.{ext}', totalBytes, path="") 
-    print(res)
+    print("Saving succesfully: ")
+    
+    # res = socketsRepo.saveFile( f'{fileName}2.{ext}', totalBytes, path="") 
+    # print(res)
 
 def getMagnetLink(magnetLink, myAddress, firstNode): 
     try:
