@@ -44,10 +44,10 @@ def isIn(responsabilityRange, value):
         return True
     
     if responsabilityRange[0] > responsabilityRange[1]:
-        if (responsabilityRange[0] < value and value < MAX_RANGE) or (0 < value and value < responsabilityRange[1]):
+        if (responsabilityRange[0] < value and value < MAX_RANGE) or (0 <= value and value <= responsabilityRange[1]):
             return True
     
-    if responsabilityRange[0] < value and value < responsabilityRange[1]:
+    if responsabilityRange[0] < value and value <= responsabilityRange[1]:
         return True
 
     return False
@@ -60,7 +60,6 @@ def getPosition(socket, responsabilityRange, NextOneID, preNode, posNode, addres
     if (isIn(responsabilityRange, NextOneID)): 
         hs = ""
         if NextOneID in myFiles:
-            print("\n\n\n\nSi ta\n\n\n\n")
             hs = header.fileAlreadyUpload(preNode, responsabilityRange)
         else:
             hs = header.getPosition(preNode, responsabilityRange)
