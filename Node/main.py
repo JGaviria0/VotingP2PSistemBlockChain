@@ -138,7 +138,6 @@ def main():
     
     while True: 
         print(myAddress, myID, preNode, posNode, responsabilityRange)
-        print(myFiles)
         headerJSON, binaryFile = socket.recv_multipart()
         heade = json.loads(headerJSON)
         print(heade)
