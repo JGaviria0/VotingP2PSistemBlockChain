@@ -28,7 +28,7 @@ def findPosition(firtsNode, myAddres, myID):
             if message["Code"] == SUCCESS_CODE:
                 FindMyPosition = True
                 print(message["PreNode"])
-                return socketsub, firtsNode, message["PreNode"][0], message["PreNode"][1]
+                return socketsub, firtsNode, message["PreNode"][0], message["PreNode"][1], message["Message"]
             
             socketsub.close()
             firtsNode = message["PreNode"]
@@ -53,18 +53,19 @@ def isIn(responsabilityRange, value):
     return False
 
 
-def getPosition(socket, responsabilityRange, NextOneID, preNode, posNode, address): 
+def getPosition(socket, responsabilityRange, NextOneID, preNode, posNode, address, myFiles): 
     NextOneID = int(NextOneID)
     print(NextOneID)
 
     if (isIn(responsabilityRange, NextOneID)): 
-        hs = header.getPosition(preNode, responsabilityRange)
+        hs = ""
+        if NextOneID in myFiles:
+            print("\n\n\n\nSi ta\n\n\n\n")
+            hs = header.fileAlreadyUpload(preNode, responsabilityRange)
+        else:
+            hs = header.getPosition(preNode, responsabilityRange)
         headerJSON = json.dumps(hs).encode()
         socket.send_multipart([headerJSON, headerJSON])
-        
-        # responsabilityRange = (NextOneID, responsabilityRange[1])
-
-        # return address, responsabilityRange
 
     else: 
         hs = header.askNextOne(preNode)

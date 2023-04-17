@@ -29,6 +29,7 @@ context = zmq.Context()
 preNode = ""
 posNode = ""
 responsabilityRange = (0,MAX_RANGE)
+myFiles = []
 
 def getMyIP():  
     s = sok.socket(sok.AF_INET, sok.SOCK_DGRAM)
@@ -52,7 +53,7 @@ def getMyID():
 
 def getPosition(socket,responsability, heade, preNode):
     if heade["OperationType"] == FIND_POSITION_TYPE:
-        subscribe.getPosition(socket,responsability, heade["MyId"], preNode, posNode, heade["Address"])
+        subscribe.getPosition(socket,responsability, heade["MyId"], preNode, posNode, heade["Address"], myFiles)
 
 def confirmPosition(socket, heade, directory, myAddress):
     global preNode, posNode, responsabilityRange
@@ -69,7 +70,7 @@ def confirmPosition(socket, heade, directory, myAddress):
             print("\n\n\n",i, "\n\n\n")
             fileID = int(i,16)%MAX_RANGE
             if not subscribe.isIn(responsabilityRange, fileID):
-                socketsub, _, _, _ = subscribe.findPosition(heade["Address"], myAddress, fileID)
+                socketsub, _, _, _, _ = subscribe.findPosition(heade["Address"], myAddress, fileID)
                 fileSize = os.path.getsize(f"{directory}{i}")
                 with open(f'{directory}{i}', 'rb') as inputFile:
                     bytes = inputFile.read()
@@ -80,6 +81,7 @@ def confirmPosition(socket, heade, directory, myAddress):
 def savePart(socket, heade, binaryFile, directory):
     if heade["OperationType"] == SEND_TYPE :
         hash = heade["Hash"]
+        myFiles.append(int(hash,16)%MAX_RANGE)
         fileName = heade["Name"]
         print(f"upload file: {fileName} hash: {hash}")
         message = socketsRepo.saveFile(hash, binaryFile, dirNode=directory)
@@ -124,12 +126,9 @@ def main():
     os.mkdir(dirpath)
     
     if not data.firstNode: 
-        socketPreNode, posNode, preNode, preNodeId= subscribe.findPosition(firtsNode, myAddress, myID)
+        socketPreNode, posNode, preNode, preNodeId, _= subscribe.findPosition(firtsNode, myAddress, myID)
         responsabilityRange = (preNodeId, myID) 
         
-        #Falta enviar todos los paquetes que pertenecen al nuevo tramo
-
-        # confirm pos
         hs = header.confirmSubscription(myAddress, myID)
         headerJSON = json.dumps(hs).encode()
         socketPreNode.send_multipart([headerJSON, headerJSON])
@@ -139,6 +138,7 @@ def main():
     
     while True: 
         print(myAddress, myID, preNode, posNode, responsabilityRange)
+        print(myFiles)
         headerJSON, binaryFile = socket.recv_multipart()
         heade = json.loads(headerJSON)
         print(heade)

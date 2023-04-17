@@ -32,7 +32,7 @@ def upload(fileName, address, firstNode, myAddress):
     sha256.update(magnetLink)
     magnetLinkHash = sha256.hexdigest()
     fileID = int(magnetLinkHash, 16)%MAX_RANGE
-    socketsub, _, _, _ = subscribe.findPosition(firstNode, myAddress, fileID)
+    socketsub, _, _, _, _= subscribe.findPosition(firstNode, myAddress, fileID)
     broker.sendChunk(magnetLink, socketsub, headerJSON["Name"], headerJSON["Size"], 0, magnetLinkHash, magnetLink=True)
     print(magnetLink)
     info = f'\n\n The magnetLink for {headerJSON["Name"]} es: \n\n{magnetLinkHash}\n\n'
@@ -46,7 +46,7 @@ def download(res, firstNode, myAddress):
         fileName, _ = parts
         print(parts)
         fileID = int(fileName, 16)%MAX_RANGE
-        socketsub, _, _, _ = subscribe.findPosition(firstNode, myAddress, fileID)
+        socketsub, _, _, _, _= subscribe.findPosition(firstNode, myAddress, fileID)
         bytes = broker.getFile(socketsub, fileName)
         totalBytes += bytes
     
@@ -60,7 +60,7 @@ def download(res, firstNode, myAddress):
 def getMagnetLink(magnetLink, myAddress, firstNode): 
     try:
         fileID = int(magnetLink, 16)%MAX_RANGE
-        socketsub, _, _, _ = subscribe.findPosition(firstNode, myAddress, fileID)
+        socketsub, _, _, _, _ = subscribe.findPosition(firstNode, myAddress, fileID)
         bytes = broker.getFile(socketsub, magnetLink)
         bytesJson = json.loads(bytes)
         res = socketsRepo.saveFile( f'{bytesJson["Name"]}MagnetLink.txt', bytes, path="") 

@@ -43,14 +43,18 @@ def sendFile(header, address, firtsNode):
             hash.update(bytes)
             hashPart = hash.hexdigest()
             IDHashPart = int(hashPart, 16)%MAX_RANGE
-            socketsub, addressnode, _, _ = subscribe.findPosition(firtsNode, address, IDHashPart)
+            socketsub, addressnode, _, _, ms = subscribe.findPosition(firtsNode, address, IDHashPart)
 
-            eachsize = BUF_SIZE
-            if parts == cs-1:
-                eachsize = size%(BUF_SIZE)
-                if cs == 0:
-                    break
-            newhash = sendChunk(bytes, socketsub, header["Name"], eachsize, parts, hashPart)
+            if ms == "Already find your position, but I already have that file.":
+                print("Continue because the file already in the server.")
+            else:
+                eachsize = BUF_SIZE
+                if parts == cs-1:
+                    eachsize = size%(BUF_SIZE)
+                    if cs == 0:
+                        break
+                newhash = sendChunk(bytes, socketsub, header["Name"], eachsize, parts, hashPart)
+                
             hashes.append([hashPart, addressnode])
 
     return hashes

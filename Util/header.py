@@ -115,6 +115,15 @@ def getPosition(preNode, responsabilityRange):
 
     return header
 
+def fileAlreadyUpload(preNode, responsabilityRange):
+    header = {
+        "Code": SUCCESS_CODE, 
+        "Message": "Already find your position, but I already have that file.",
+        "PreNode": (preNode, responsabilityRange[0])
+    }
+
+    return header
+
 def askNextOne(preNode): 
 
     header = {
