@@ -10,6 +10,7 @@ NODES_PORT = os.getenv('NODES_PORT')
 MAIN_DIRECTORY = os.getenv('MAIN_DIRECTORY')
 BUF_SIZE = int(os.getenv('BUF_SIZE'))
 MAX_RANGE = int(os.getenv('MAX_RANGE'))
+SUCCESS_CODE_ALREADY_HAVE_FILE = os.getenv('SUCCESS_CODE_ALREADY_HAVE_FILE')
 context = zmq.Context()
 
 def sendChunk(bytes, socket, name, size, npart, hashPart, magnetLink=False):
@@ -43,9 +44,9 @@ def sendFile(header, address, firtsNode):
             hash.update(bytes)
             hashPart = hash.hexdigest()
             IDHashPart = int(hashPart, 16)%MAX_RANGE
-            socketsub, addressnode, _, _, ms = subscribe.findPosition(firtsNode, address, IDHashPart)
+            socketsub, addressnode, _, _, code = subscribe.findPosition(firtsNode, address, IDHashPart)
 
-            if ms == "Already find your position, but I already have that file.":
+            if code == SUCCESS_CODE_ALREADY_HAVE_FILE:
                 print("Continue because the file already in the server.")
             else:
                 eachsize = BUF_SIZE
