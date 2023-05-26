@@ -46,6 +46,7 @@ def download(res, firstNode, myAddress):
         fileFullName, ext = res["Name"].split('.')
     except:
         ext = ""
+        fileFullName = res["Name"]
     for parts in res["Parts"]:
         fileName, _ = parts
         print(parts)
