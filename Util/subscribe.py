@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 FIND_POSITION_TYPE = os.getenv('FIND_POSITION_TYPE')
 SUCCESS_CODE = os.getenv('SUCCESS_CODE')
+SUCCESS_CODE_ALREADY_HAVE_FILE = os.getenv('SUCCESS_CODE_ALREADY_HAVE_FILE')
 MAX_RANGE = int(os.getenv('MAX_RANGE'))
 
 context = zmq.Context()
@@ -25,10 +26,10 @@ def findPosition(firtsNode, myAddres, myID):
             message = json.loads(res[0])
             print(message)
 
-            if message["Code"] == SUCCESS_CODE:
+            if message["Code"] == SUCCESS_CODE or message["Code"] == SUCCESS_CODE_ALREADY_HAVE_FILE:
                 FindMyPosition = True
                 print(message["PreNode"])
-                return socketsub, firtsNode, message["PreNode"][0], message["PreNode"][1], message["Message"]
+                return socketsub, firtsNode, message["PreNode"][0], message["PreNode"][1], message["Code"]
             
             socketsub.close()
             firtsNode = message["PreNode"]
