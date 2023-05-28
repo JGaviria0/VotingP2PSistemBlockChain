@@ -10,6 +10,9 @@ import hashlib
 from dotenv import load_dotenv
 import socket as so
 
+#Saquial
+import string
+
 load_dotenv()
 
 MAX_RANGE = int(os.getenv('MAX_RANGE'))
@@ -23,6 +26,8 @@ def getMyIP():
     return IPAddr
 
 def upload(fileName, address, firstNode, myAddress): 
+
+    #Test file
 
     headerJSON = header.uploadFile(fileName, path="")
     hashes = broker.sendFile(headerJSON, address, firstNode)
@@ -76,6 +81,15 @@ def getMagnetLink(magnetLink, myAddress, firstNode):
         print(e)
         print("Error geting download data")
 
+
+#Saquial
+def getVote(votos, candidatos, myAddress):
+    votante = ''.join(random.choices(string.ascii_lowercase, k=20)) #https://flexiple.com/python/generate-random-string-python/ 
+    votos = header.addVote(votos, votante, myAddress, candidatos[random.randint(0, 2)])
+    return votos
+
+
+
 def main():
 
     parser = argparse.ArgumentParser(
@@ -85,6 +99,7 @@ def main():
     parser.add_argument('-address', action="store", type=str, default="localhost:0000")
     parser.add_argument('--upload', action="store_true", default=False)
     parser.add_argument('--download', action="store_true", default=False)
+    parser.add_argument('--vote', action="store_true", default=False)
     parser.add_argument('-fileName', action="store", type=str, default="")
     parser.add_argument('-magnetLink', action="store", type=str, default="")
     # parser.add_argument('-magnetFile', action="store", type=str, default="")
@@ -111,5 +126,27 @@ def main():
     if data.download:
         res= getMagnetLink(magnetLink, myAddress, firtsNode)
         download(res, firtsNode, myAddress)
+
+    #Saquial
+    if data.vote:
+        candidatos = []
+        votos = {}
+
+        i = 0
+        while (i < 3):
+            candidatos.append(''.join(random.choices(string.ascii_lowercase, k=20)))
+            i += 1
+        
+        i = 0
+        while (i < 10):
+            getVote(votos, candidatos, myAddress)
+            i += 1
+
+        block = header.createBlock("", votos)
+
+        print(block)
+            
+
+
 
 main()
