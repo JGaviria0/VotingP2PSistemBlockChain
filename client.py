@@ -1,4 +1,4 @@
-from Util import header, broker, subscribe, socketsRepo
+from Util import header, broker, subscribe, socketsRepo, votes
 import json
 import argparse
 import zmq
@@ -9,6 +9,9 @@ import sys
 import hashlib
 from dotenv import load_dotenv
 import socket as so
+
+#Saquial
+import string
 
 load_dotenv()
 
@@ -25,6 +28,8 @@ def getMyIP():
     return IPAddr
 
 def upload(fileName, address, firstNode, myAddress): 
+
+    #Test file
 
     headerJSON = header.uploadFile(fileName, path="")
     hashes = broker.sendFile(headerJSON, address, firstNode)
@@ -83,6 +88,15 @@ def getMagnetLink(magnetLink, myAddress, firstNode):
         print(e)
         print("Error geting download data")
 
+
+#Saquial
+def getVote(vote, candidates, myAddress):
+    Name = ''.join(random.choices(string.ascii_lowercase, k=20)) #https://flexiple.com/python/generate-random-string-python/ 
+    vote = votes.addVote(vote, Name, myAddress, candidates[random.randint(0, 2)])
+    return vote
+
+
+
 def main():
 
     parser = argparse.ArgumentParser(
@@ -92,6 +106,7 @@ def main():
     parser.add_argument('-address', action="store", type=str, default="localhost:0000")
     parser.add_argument('--upload', action="store_true", default=False)
     parser.add_argument('--download', action="store_true", default=False)
+    parser.add_argument('--vote', action="store_true", default=False) #Saquial
     parser.add_argument('-fileName', action="store", type=str, default="")
     parser.add_argument('-magnetLink', action="store", type=str, default="")
     # parser.add_argument('-magnetFile', action="store", type=str, default="")
@@ -119,5 +134,27 @@ def main():
         res= getMagnetLink(magnetLink, myAddress, firtsNode)
         if res: 
             download(res, firtsNode, myAddress)
+
+    #Saquial
+    if data.vote:
+        candidates = []
+        vote = {}
+
+        i = 0
+        while (i < 3):
+            candidates.append(''.join(random.choices(string.ascii_lowercase, k=20)))
+            i += 1
+        
+        i = 0
+        while (i < 10):
+            getVote(vote, candidates, myAddress)
+            i += 1
+
+        block = votes.createBlock("", vote)
+
+        print(block)
+            
+
+
 
 main()

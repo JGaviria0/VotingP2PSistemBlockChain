@@ -16,3 +16,9 @@ def hashfile(fname, path = MAIN_DIRECTORY):
                 break
             sha256.update(data)
     return sha256.hexdigest()
+
+#Saquial
+def hashString(sentence):
+    sha256 = hashlib.sha256()
+    sha256.update(sentence.encode("UTF-8"))
+    return sha256.hexdigest()
