@@ -4,7 +4,6 @@ from Util import hashing
 import socket
 from dotenv import load_dotenv
 import random
-from datetime import datetime
 
 load_dotenv()
 UPLOAD_TYPE = os.getenv('UPLOAD_TYPE')
@@ -154,31 +153,6 @@ def uploadFile( fileName, path=MAIN_DIRECTORY ):
         "Name": fileName,
         "Size": fileSize,
         "Hash": hash
-    }
-
-    return header
-
-#Saquial
-def addVote(votos, IDV, IP, IDC):
-
-    header = {
-        "Cliente": IP,
-        "Voto": hashing.hashString(IDC),
-        "Fecha": str(datetime.now())
-    }
-
-    Vot = hashing.hashString(IDV)
-    if votos.get(Vot) is None:
-        votos[Vot] = header
-
-    return votos
-
-def createBlock(prevBlock, votos):
-
-    header = {
-        "previous_block": prevBlock,
-        "transactions": votos,
-        "signature": ""
     }
 
     return header

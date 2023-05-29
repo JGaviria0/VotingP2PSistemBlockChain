@@ -1,4 +1,4 @@
-from Util import header, broker, subscribe, socketsRepo
+from Util import header, broker, subscribe, socketsRepo, votes
 import json
 import argparse
 import zmq
@@ -83,10 +83,10 @@ def getMagnetLink(magnetLink, myAddress, firstNode):
 
 
 #Saquial
-def getVote(votos, candidatos, myAddress):
-    votante = ''.join(random.choices(string.ascii_lowercase, k=20)) #https://flexiple.com/python/generate-random-string-python/ 
-    votos = header.addVote(votos, votante, myAddress, candidatos[random.randint(0, 2)])
-    return votos
+def getVote(vote, candidates, myAddress):
+    Name = ''.join(random.choices(string.ascii_lowercase, k=20)) #https://flexiple.com/python/generate-random-string-python/ 
+    vote = votes.addVote(vote, Name, myAddress, candidates[random.randint(0, 2)])
+    return vote
 
 
 
@@ -99,7 +99,7 @@ def main():
     parser.add_argument('-address', action="store", type=str, default="localhost:0000")
     parser.add_argument('--upload', action="store_true", default=False)
     parser.add_argument('--download', action="store_true", default=False)
-    parser.add_argument('--vote', action="store_true", default=False)
+    parser.add_argument('--vote', action="store_true", default=False) #Saquial
     parser.add_argument('-fileName', action="store", type=str, default="")
     parser.add_argument('-magnetLink', action="store", type=str, default="")
     # parser.add_argument('-magnetFile', action="store", type=str, default="")
@@ -129,20 +129,20 @@ def main():
 
     #Saquial
     if data.vote:
-        candidatos = []
-        votos = {}
+        candidates = []
+        vote = {}
 
         i = 0
         while (i < 3):
-            candidatos.append(''.join(random.choices(string.ascii_lowercase, k=20)))
+            candidates.append(''.join(random.choices(string.ascii_lowercase, k=20)))
             i += 1
         
         i = 0
         while (i < 10):
-            getVote(votos, candidatos, myAddress)
+            getVote(vote, candidates, myAddress)
             i += 1
 
-        block = header.createBlock("", votos)
+        block = votes.createBlock("", vote)
 
         print(block)
             
