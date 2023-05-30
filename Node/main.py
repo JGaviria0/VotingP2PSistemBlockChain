@@ -94,6 +94,12 @@ def download(socket, heade, directory):
         hsJSON = json.dumps(hs).encode()
         socketsRepo.sendFile(socket, fileName, hsJSON, dirNode=directory)
 
+#Saquial
+def vote(socket, heade):
+    if heade["OperationType"] == 'vote':
+        print(heade["votes"])
+        socket.send(b'Received')
+
 def main():
     global preNode, posNode, responsabilityRange
 
@@ -147,7 +153,8 @@ def main():
             FIND_POSITION_TYPE: getPosition(socket,responsabilityRange, heade, preNode),
             CONFIRM_SUSCRIPTION: confirmPosition(socket, heade, directory, myAddress),
             SEND_TYPE: savePart(socket, heade, binaryFile, directory),
-            DOWNLOAD_TYPE: download(socket, heade, directory)
+            DOWNLOAD_TYPE: download(socket, heade, directory),
+            'vote': vote(socket, heade) #Saquial
 
         }
 

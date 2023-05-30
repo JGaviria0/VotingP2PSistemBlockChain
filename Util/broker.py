@@ -3,7 +3,7 @@ import os
 import json
 import hashlib
 from dotenv import load_dotenv
-from Util import header, subscribe
+from Util import header, subscribe, votes
 
 load_dotenv()
 NODES_PORT = os.getenv('NODES_PORT')
@@ -69,4 +69,15 @@ def getFile( socket, fileName):
     headerJSON, bytes = socket.recv_multipart()
 
     return bytes
+
+
+#Saquial
+def sendVote(vote, address):
+    headerJSON = json.dumps(votes.uploadVote(vote)).encode()
+    socketsub = context.socket(zmq.REQ)
+    socketsub.connect('tcp://' + address)
+
+    socketsub.send_multipart([headerJSON, b''])
+    message = socketsub.recv_multipart()
+    print(message)
     

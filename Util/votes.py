@@ -27,3 +27,11 @@ def createBlock(prevBlock, votes):
     }
 
     return header
+
+def uploadVote(vote):
+    header = {
+        "OperationType": 'vote',
+        "votes": vote,
+    }
+
+    return header

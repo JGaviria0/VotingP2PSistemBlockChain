@@ -25,6 +25,7 @@ def getMyIP():
     IPAddr = s.getsockname()[0]
     return IPAddr
 
+"""
 def upload(fileName, address, firstNode, myAddress): 
 
     #Test file
@@ -80,71 +81,102 @@ def getMagnetLink(magnetLink, myAddress, firstNode):
     except Exception as e: 
         print(e)
         print("Error geting download data")
-
+"""
 
 #Saquial
-def getVote(vote, candidates, myAddress):
+def getVote(vote, candidates, myAddress): #test
     Name = ''.join(random.choices(string.ascii_lowercase, k=20)) #https://flexiple.com/python/generate-random-string-python/ 
     vote = votes.addVote(vote, Name, myAddress, candidates[random.randint(0, 2)])
     return vote
 
+def generateCandidates(): #test
+    candidates = []
+
+    i = 0
+    while (i < 3):
+        candidates.append(''.join(random.choices(string.ascii_lowercase, k=5)))
+        i += 1
+
+    return candidates
+
 
 
 def main():
+
+    #candidates = generateCandidates()
+    #print(candidates)
+
+    candidates = ["1","2","3"]
 
     parser = argparse.ArgumentParser(
         description='Example with nonoptional arguments',
     )
 
     parser.add_argument('-address', action="store", type=str, default="localhost:0000")
-    parser.add_argument('--upload', action="store_true", default=False)
-    parser.add_argument('--download', action="store_true", default=False)
-    parser.add_argument('--vote', action="store_true", default=False) #Saquial
-    parser.add_argument('-fileName', action="store", type=str, default="")
-    parser.add_argument('-magnetLink', action="store", type=str, default="")
-    # parser.add_argument('-magnetFile', action="store", type=str, default="")
+    #parser.add_argument('--upload', action="store_true", default=False)
+    #parser.add_argument('--download', action="store_true", default=False)
+    #parser.add_argument('-fileName', action="store", type=str, default="")
+    #parser.add_argument('-magnetLink', action="store", type=str, default="")
+    #parser.add_argument('-magnetFile', action="store", type=str, default="")
 
+    #Saquial
+    parser.add_argument('--vote', action="store_true", default=False) 
+    parser.add_argument('-ID', action="store", type=str, default="")
+    parser.add_argument('-selection', action="store", type=str, default="")
+    
     data = parser.parse_args()
+
+    """
     if data.upload and data.fileName == "":
         print("--upload flag, must to specify -fileName")
         return
-
     if data.download and data.magnetLink == "":
         print("--download flag, must to specify -magnetLink")
         return
+    """
+
+    if data.vote and data.ID == "":
+        print("--Votant must specify ID")
+        return
+    if data.vote and data.selection not in candidates:
+        print("--Please select a valid vote")
+        return
+    if data.vote and data.address == "":
+        print("--Please select an address")
+        return
 
     firtsNode = data.address
-    fileName = data.fileName
-    magnetLink = data.magnetLink
+    #fileName = data.fileName
+    #magnetLink = data.magnetLink
 
     myAddress = getMyIP()
 
-
+    """
     if data.upload:
         upload(fileName, myAddress, firtsNode, myAddress)
     
     if data.download:
         res= getMagnetLink(magnetLink, myAddress, firtsNode)
         download(res, firtsNode, myAddress)
+    """
 
     #Saquial
     if data.vote:
-        candidates = []
         vote = {}
-
-        i = 0
-        while (i < 3):
-            candidates.append(''.join(random.choices(string.ascii_lowercase, k=20)))
-            i += 1
+        votes.addVote(vote, data.ID, myAddress, data.selection)
+        print(vote)
+        broker.sendVote(vote, firtsNode)
         
+        """
         i = 0
         while (i < 10):
             getVote(vote, candidates, myAddress)
             i += 1
-
+        
         block = votes.createBlock("", vote)
 
         print(block)
+        """
             
 
 
