@@ -16,6 +16,8 @@ import string
 load_dotenv()
 
 MAX_RANGE = int(os.getenv('MAX_RANGE'))
+SUCCESS_CODE = os.getenv('SUCCESS_CODE')
+SUCCESS_CODE_ALREADY_HAVE_FILE = os.getenv('SUCCESS_CODE_ALREADY_HAVE_FILE')
 
 context = zmq.Context()
 
@@ -52,6 +54,7 @@ def download(res, firstNode, myAddress):
         fileFullName, ext = res["Name"].split('.')
     except:
         ext = ""
+        fileFullName = res["Name"]
     for parts in res["Parts"]:
         fileName, _ = parts
         print(parts)
@@ -71,12 +74,16 @@ def download(res, firstNode, myAddress):
 def getMagnetLink(magnetLink, myAddress, firstNode): 
     try:
         fileID = int(magnetLink, 16)%MAX_RANGE
-        socketsub, _, _, _, _ = subscribe.findPosition(firstNode, myAddress, fileID)
-        bytes = broker.getFile(socketsub, magnetLink)
-        bytesJson = json.loads(bytes)
-        res = socketsRepo.saveFile( f'{bytesJson["Name"]}MagnetLink.txt', bytes, path="") 
-        print(res)
-        return bytesJson
+        socketsub, _, _, _, code = subscribe.findPosition(firstNode, myAddress, fileID)
+        if code != SUCCESS_CODE:
+            bytes = broker.getFile(socketsub, magnetLink)
+            bytesJson = json.loads(bytes)
+            res = socketsRepo.saveFile( f'{bytesJson["Name"]}MagnetLink.txt', bytes, path="") 
+            print(res)
+            return bytesJson
+        else: 
+            print("Error geting the magnetLink, it does't exist")
+            return False
 
     except Exception as e: 
         print(e)
